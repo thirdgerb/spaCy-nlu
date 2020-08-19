@@ -1,0 +1,7 @@
+{
+  "name": "commune spacy nlu",
+  "host": "127.0.0.1",
+  "port": 10830,
+  "debug": true,
+  "model": "zh_core_web_md"
+}
