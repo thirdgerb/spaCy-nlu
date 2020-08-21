@@ -1,8 +1,11 @@
+# coding=utf-8
 import os
 import json
 import spacy
 from sanic import Sanic
 from sanic.response import json as s_json
+from intentClassifier import create_classifier, init_classifier
+from simpleChat import create_simple_chat
 
 
 def load_json(path: str):
@@ -15,75 +18,33 @@ def load_json(path: str):
         return json.load(f)
 
 
-class IntentClassifier:
-    doc_map = {}
-
-    def __init__(self, spacy_nlp):
-        self.nlp = spacy_nlp
-
-    def read_from_dict(self, data: dict):
-        for label in data:
-            examples = data[label]
-            for example in examples:
-                self.learn(label, example)
-
-    def learn(
-        self,
-        label: str,
-        int_example: str
-    ):
-        if label not in self.doc_map:
-            self.doc_map[label] = {}
-        example_doc = self.nlp(int_example)
-        self.doc_map[label][int_example] = example_doc
-
-    def wrap(
-        self,
-        sentence: str
-    ):
-        return self.nlp(sentence)
-
-    def predict(
-        self,
-        sentence_doc
-    ):
-        similarity = 0
-        matched = ""
-        for label in self.doc_map:
-            example_map = self.doc_map[label]
-            for example in example_map:
-                example_doc = example_map[example]
-                s = sentence_doc.similarity(example_doc)
-                if s > similarity:
-                    similarity = s
-                    matched = label
-                if s > 0.95:
-                    break
-        return {"likely": similarity, "label": matched}
-
-
 # 读取配置
 config_path = os.path.abspath("config.json")
 config = load_json(config_path)
 
+# 初始化 nlp
 nlp = spacy.load(config["model"])
-data_path = os.path.abspath("data.json")
-intent_example_map = load_json(data_path)
 # 完成 matcher 的初始化.
-classifier = IntentClassifier(nlp)
-classifier.read_from_dict(intent_example_map)
+data_path = os.path.abspath("intents.json")
+intent_example_map = load_json(data_path)
+classifier = create_classifier(nlp)
+init_classifier(classifier, intent_example_map)
 
+# 初始化 chat
+chat = create_simple_chat(nlp)
+
+# 开始初始化 app
 app = Sanic(config["name"])
 
 
 @app.route("/")
 async def index(request):
-    sentence_doc = classifier.wrap("hello world")
+    sentence_doc = classifier.nlp("hello world")
     prediction = classifier.predict(sentence_doc)
     return s_json({"test": prediction})
 
 
-@app.route('/learn', methods=['POST'])
+@app.route('/classifier/learn', methods=['POST'])
 async def learn(request):
     req_data = request.json
     label = req_data["label"]
@@ -94,15 +55,19 @@ async def learn(request):
     return s_json({"code": 0, "msg": "success"})
 
 
-@app.route('/predict', methods=['GET'])
+@app.route('/classifier/predict', methods=['GET'])
 async def predict(request):
     req_data = request.json
     sentence = req_data["sentence"]
+    possibles = req_data["possibles"] or []
+    threshold = req_data["threshold"] or 0.8
+    limit = req_data["limit"] or 5
+
     if not sentence:
         return s_json({"code": 400, "msg": "invalid request"})
-    sentence_doc = classifier.wrap(sentence)
-    prediction = classifier.predict(sentence_doc)
-    return s_json({"code": 0, "msg": "success", "data": prediction})
+    sentence_doc = classifier.nlp(sentence)
+    prediction = classifier.predict(sentence_doc, possibles, threshold, limit)
+    return s_json({"code": 0, "msg": "success", "classification": prediction})
 
 
 if __name__ == "__main__":
