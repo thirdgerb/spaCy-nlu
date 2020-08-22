@@ -85,16 +85,6 @@ class TestTree(unittest.TestCase):
                 string += str(i)
             ele_strings.append(string)
 
-        start = ns()
-        matched = []
-        for string in ele_strings:
-            if string in searches:
-                matched.append(string)
-        end = ns()
-        gap2 = end - start
-        self.assertEqual(4, len(matched))
-        print(gap2, gap)
-
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,5 +3,7 @@
   "host": "127.0.0.1",
   "port": 10830,
   "debug": true,
-  "model": "zh_core_web_md"
+  "model": "zh_core_web_md",
+  "classifier_matched_threshold" : 0.95,
+  "chat_matched_threshold": 0.95
 }

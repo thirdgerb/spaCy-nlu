@@ -6,6 +6,7 @@ class IntentClassifier:
     def __init__(self, spacy_nlp, matched_threshold):
         self.nlp = spacy_nlp
         self.doc_map = {}
+        self.label_hash_map = {}
         self.matched_threshold = matched_threshold or 0.95
 
     def learn(
@@ -19,11 +20,13 @@ class IntentClassifier:
         :param int_example:
         :return: void
         """
+        label_hash = hash(label)
+        self.label_hash_map[label_hash] = label
         if label not in self.doc_map:
-            self.doc_map[label] = []
+            self.doc_map[label_hash] = []
         example_doc = self.nlp(int_example)
         if example_doc.has_vector:
-            self.doc_map[label].append(example_doc)
+            self.doc_map[label_hash].append(example_doc)
 
     def learn_intent(
         self,
@@ -37,11 +40,13 @@ class IntentClassifier:
         :param examples:
         :return:
         """
-        self.doc_map[label] = []
+        label_hash = hash(label)
+        self.label_hash_map[label_hash] = label
+        self.doc_map[label_hash] = []
         for example in examples:
             example_doc = self.nlp(example)
             if example_doc.has_vector:
-                self.doc_map[label].append(example_doc)
+                self.doc_map[label_hash].append(example_doc)
 
     def flush(self):
         self.doc_map = {}
@@ -66,18 +71,25 @@ class IntentClassifier:
         doc_map = self.doc_map.copy()
         # 完全命中的阈值. 遇到这个阈值的直接返回.
         matched_threshold = self.matched_threshold
+
+        possibles_hashes = []
+        for possible in possibles:
+            possible_hash = hash(possible)
+            possibles_hashes.append(possible_hash)
+
         # 先执行 possible 的检查.
-        for label in possibles:
+        for label_hash in possibles_hashes:
             # 没有语料
-            if label not in doc_map:
+            if label_hash not in doc_map:
                 continue
             # 循环查找.
-            doc_list = doc_map[label]
+            doc_list = doc_map[label_hash]
             # 删除掉元素, 等下还可能要遍历.
-            del doc_map[label]
+            del doc_map[label_hash]
             for doc in doc_list:
                 s = doc.similarity(sentence_doc)
                 if s >= threshold:
+                    label = self.label_hash_map[label_hash]
                     pred = pred.append(label, s, limit)
                 # 有认为命中的阈值, 直接返回
                 if s >= matched_threshold:
@@ -88,11 +100,12 @@ class IntentClassifier:
             return pred.to_list()
 
         # 没办法, 只好彻底遍历.
-        for label in doc_map:
-            doc_list = doc_map[label]
+        for label_hash in doc_map:
+            doc_list = doc_map[label_hash]
             for doc in doc_list:
                 s = doc.similarity(sentence_doc)
                 if s >= threshold:
+                    label = self.label_hash_map[label_hash]
                     pred = pred.append(label, s, limit)
                 # 遇到认为彻底命中的阈值, 直接返回.
                 if s >= matched_threshold:

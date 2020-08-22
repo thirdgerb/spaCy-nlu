@@ -1,7 +1,6 @@
 from unittest import TestCase
 from .simpleChat import SimpleChat
 import spacy
-import time
 
 nlp = spacy.load("zh_core_web_md")
 
@@ -63,7 +62,7 @@ class TestSimpleChat(TestCase):
             last = current
             current = line
             if last and current:
-                chat.learn(last, current)
+                chat.learn(last, last, current)
 
         for line in lines:
             last = current

@@ -16,11 +16,12 @@ class SimpleChat:
 
     def learn(
         self,
+        cid: str,
         say: str,
         reply: str,
         index=''
     ):
-        if not say or not reply:
+        if not cid or not say or not reply:
             return
 
         doc = self.nlp(say)
@@ -31,7 +32,7 @@ class SimpleChat:
         if index not in self.chats:
             self.chats[index] = ChatGroup(self.matched_threshold)
         group = self.chats[index]
-        group.append(doc, reply)
+        group.add(cid, say, doc, reply)
 
     def reply(
         self,
@@ -49,8 +50,8 @@ class SimpleChat:
         chat = self.chats[index]
         say_doc = self.nlp(say)
         result = chat.reply(say_doc, threshold)
-        return {"reply": result[0], "likely": result[1]}
+        return {"matched": result[0], "reply": result[1], "likely": result[2]}
 
     @staticmethod
     def empty_reply():
-        return {"reply": "", "likely": 0.0}
+        return {"matched": "", "reply": "", "likely": 0.0}

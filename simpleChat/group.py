@@ -1,31 +1,35 @@
 
 class ChatNode:
 
-    def __init__(self, doc, reply: str):
+    def __init__(self, cid: str, origin: str, doc, reply: str):
+        self.cid = cid
+        self.origin = origin
         self.doc = doc
         self.reply = reply
-        # self.vector = doc.vector
-        # self.vector_norm = doc.vector_norm
 
 
 class ChatGroup:
 
     def __init__(self, matched_threshold=0.85):
         self.matched_threshold = matched_threshold
-        self.awaits = []
-        self.matched = []
+        self.awaits = {}
+        self.matched = {}
         self.matched_threshold = 0.85
 
-    def append(self, doc, reply: str):
-        node = ChatNode(doc, reply)
+    def add(self, cid: str, origin: str, doc, reply: str):
+        node = ChatNode(cid, origin, doc, reply)
+        cid_hash = hash(cid)
         # 新来的总在前面
-        self.awaits.insert(0, node)
+        if cid_hash in self.matched:
+            self.matched[cid_hash] = node
+        else:
+            self.awaits[cid_hash] = node
 
     def set_matched(self, node: ChatNode):
         # 暂时用最简单的办法, 让命中过的放最前面.
-        i = self.awaits.index(node)
-        self.matched.insert(0, node)
-        del self.awaits[i]
+        cid_hash = hash(node.cid)
+        del self.awaits[cid_hash]
+        self.matched[cid_hash] = node
 
     def reply(
         self,
@@ -35,34 +39,32 @@ class ChatGroup:
         similarity = 0.0
         matched = None
         matched_threshold = self.matched_threshold
-        matched_arr = self.matched
-        # doc_norm = doc.vector_norm
-        # doc_vector = doc.vector
+        matched_map = self.matched
 
-        for current in matched_arr:
-            # s = numpy.dot(current.vector, doc_vector) / (current.vector_norm * doc_norm)
+        for id_hash in matched_map:
+            current = matched_map[id_hash]
             s = current.doc.similarity(doc)
             if s >= matched_threshold:
-                return current.reply, s
+                return current.origin, current.reply, s
             if s > threshold and s > similarity:
                 similarity = s
                 matched = current
 
-        awaits_arr = self.awaits
-        for current in awaits_arr:
-            # s = numpy.dot(current.vector, doc_vector) / (current.vector_norm * doc_norm)
+        awaits_map = self.awaits
+        for id_hash in awaits_map:
+            current = awaits_map[id_hash]
             s = current.doc.similarity(doc)
             if s >= matched_threshold:
                 self.set_matched(current)
-                return current.reply, s
+                return current.origin, current.reply, s
             if s > threshold and s > similarity:
                 similarity = s
                 matched = current
 
         if matched:
-            return matched.reply, similarity
+            return matched.origin, matched.reply, similarity
         else:
-            return "", 0.0
+            return "", "", 0.0
 
 # 弃用了!  这种做法还是更新数据太频繁, 对性能没信心
 #
