@@ -1,11 +1,10 @@
 class Prediction:
 
-    prev = None
-    depth = 0
-
     def __init__(self, label: str, similarity: float):
         self.label = label
         self.similarity = similarity
+        self.prev = None
+        self.depth = 0
 
     def append(self, label: str, similarity: float, length: int):
         # 去重

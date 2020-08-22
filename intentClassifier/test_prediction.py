@@ -31,3 +31,12 @@ class TestPrediction(TestCase):
             output
         )
 
+        # 深度检查
+        current = pre
+        depths = []
+        while current:
+            depths.append(current.depth)
+            current = current.prev
+        self.assertEqual([1, 0], depths)
+
+

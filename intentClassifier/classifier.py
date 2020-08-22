@@ -2,12 +2,10 @@ from .prediction import Prediction
 
 
 class IntentClassifier:
-    doc_map = {}
-    nlp = None
-    matched_threshold = 0.95
 
     def __init__(self, spacy_nlp, matched_threshold):
         self.nlp = spacy_nlp
+        self.doc_map = {}
         self.matched_threshold = matched_threshold or 0.95
 
     def learn(

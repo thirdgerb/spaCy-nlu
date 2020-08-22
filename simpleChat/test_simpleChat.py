@@ -1,6 +1,7 @@
 from unittest import TestCase
 from .simpleChat import SimpleChat
 import spacy
+import time
 
 nlp = spacy.load("zh_core_web_md")
 
@@ -22,22 +23,22 @@ text = """我从山中来
 看我用808打底
 再把裤子要跨起
 背上是山城烙印
-下山去 下山去
+下山去下山去
 林间小道做标记
-用心听 用力取
+用心听用力取
 挥手告别好兄弟
-地为床 天为铺
+地为床天为铺
 少侠莫怕草木枯
-日为钟 月为弓
+日为钟月为弓
 勿忘茅屋有寒冬
-宝骏 踏断 命里刺
-胭脂 洒满 暮光谷
-他日 若随 凌云志
-敢笑 黄巢 不丈夫
-冲动了我 耽误了我
-一扇门关闭了 拴上了锁
-钢做绞索 你关不到我
-一把火点燃了 干柴草垛
+宝骏踏断命里刺
+胭脂洒满暮光谷
+他日若随凌云志
+敢笑黄巢不丈夫
+冲动了我耽误了我
+一扇门关闭了拴上了锁
+钢做绞索你关不到我
+一把火点燃了干柴草垛
 青莲居士点了我的脑壳
 我跟他说没得东西好学
 生老病死不再需要草药
@@ -70,6 +71,8 @@ class TestSimpleChat(TestCase):
             if last and current:
                 result = chat.reply(last, 0.85)
                 self.assertEqual(current, result["reply"])
+
+
 
 
 

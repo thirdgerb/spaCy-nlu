@@ -1,18 +1,20 @@
+
 class ChatNode:
-    doc = None
-    reply = ""
 
     def __init__(self, doc, reply: str):
         self.doc = doc
         self.reply = reply
+        # self.vector = doc.vector
+        # self.vector_norm = doc.vector_norm
 
 
-class ChatSnack:
-    matched = []
-    awaits = []
+class ChatGroup:
 
-    def __init__(self, doc, reply: str):
-        self.append(doc, reply)
+    def __init__(self, matched_threshold=0.85):
+        self.matched_threshold = matched_threshold
+        self.awaits = []
+        self.matched = []
+        self.matched_threshold = 0.85
 
     def append(self, doc, reply: str):
         node = ChatNode(doc, reply)
@@ -28,24 +30,35 @@ class ChatSnack:
     def reply(
         self,
         doc,
-        threshold=0.95
+        threshold=0.85
     ):
         similarity = 0.0
         matched = None
-        for current in self.matched:
+        matched_threshold = self.matched_threshold
+        matched_arr = self.matched
+        # doc_norm = doc.vector_norm
+        # doc_vector = doc.vector
+
+        for current in matched_arr:
+            # s = numpy.dot(current.vector, doc_vector) / (current.vector_norm * doc_norm)
             s = current.doc.similarity(doc)
-            if s >= threshold:
+            if s >= matched_threshold:
                 return current.reply, s
-            if s > similarity:
+            if s > threshold and s > similarity:
+                similarity = s
                 matched = current
 
-        for current in self.awaits:
+        awaits_arr = self.awaits
+        for current in awaits_arr:
+            # s = numpy.dot(current.vector, doc_vector) / (current.vector_norm * doc_norm)
             s = current.doc.similarity(doc)
-            if s >= threshold:
+            if s >= matched_threshold:
                 self.set_matched(current)
                 return current.reply, s
-            if s > similarity:
+            if s > threshold and s > similarity:
+                similarity = s
                 matched = current
+
         if matched:
             return matched.reply, similarity
         else:
