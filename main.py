@@ -152,5 +152,6 @@ async def chat_reply(request):
 
 
 if __name__ == "__main__":
-    debug = config["debug"] == "true"
-    app.run(host=config["host"], port=config["port"], debug=debug, access_log=False)
+    debug = config["debug"]
+    access_log = config["access_log"]
+    app.run(host=config["host"], port=config["port"], debug=debug, access_log=access_log)
