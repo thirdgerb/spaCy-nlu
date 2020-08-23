@@ -104,7 +104,7 @@ async def classifier_predict(request):
 
     sentence_doc = classifier.nlp(sentence)
     prediction = classifier.predict(sentence_doc, possibles, threshold, limit)
-    return s_json({"code": 0, "msg": "success", "data": prediction})
+    return s_json({"code": 0, "msg": "success", "proto": prediction})
 
 
 @app.route('/chat/learn', methods=['POST'])
@@ -131,8 +131,8 @@ async def chat_learn(request):
     return s_json({"code": 0, "msg": "success"})
 
 
-@app.route('/chat/predict', methods=['GET'])
-async def chat_predict(request):
+@app.route('/chat/reply', methods=['GET'])
+async def chat_reply(request):
     req_data = request.json
 
     if "index" not in req_data \
@@ -148,7 +148,7 @@ async def chat_predict(request):
     say = req_data["say"]
 
     r = chat.reply(say, threshold, chat_index)
-    return s_json({"code": 0, "msg": "success", "data": r})
+    return s_json({"code": 0, "msg": "success", "proto": r})
 
 
 if __name__ == "__main__":
