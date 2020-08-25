@@ -107,8 +107,5 @@ class IntentClassifier:
                 if s >= threshold:
                     label = self.label_hash_map[label_hash]
                     pred = pred.append(label, s, limit)
-                # 遇到认为彻底命中的阈值, 直接返回.
-                if s >= matched_threshold:
-                    return pred.to_list()
         # 最终返回结果.
         return pred.to_list()
